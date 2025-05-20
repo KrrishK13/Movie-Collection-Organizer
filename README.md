@@ -15,6 +15,13 @@ A Python-based desktop application to manage your personal movie collection usin
 
 ---
 
+## 🗓️ Daily Upload Progress
+
+- ✅ Day 1: Initialized repository and added README
+- ✅ Day 2: Added login screen with background image and validation
+
+---
+
 ## 🧰 Tech Stack
 
 | Technology | Purpose                            |
