@@ -20,6 +20,7 @@ A Python-based desktop application to manage your personal movie collection usin
 - ✅ Day 1: Initialized repository and added README
 - ✅ Day 2: Added login screen with background image and validation
 - ✅ Day 3: Added main dashboard layout with menu buttons and TreeView
+- ✅ Day 4: Added Add Movie form and integrated database insert functionality
 
 ---
 
