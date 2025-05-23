@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
+import mysql.connector
 
 class MovieDashboard:
     def __init__(self, root, username="mahesh"):
@@ -8,7 +9,21 @@ class MovieDashboard:
         self.root.title('Movie Collection Organizer')
         self.root.resizable(False, False)
         self.username = username
+        self.connect_db()
         self.setup_ui()
+
+    def connect_db(self):
+        try:
+            self.conn = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="krrish13@KAU",
+                database="movie_collection_organiser"
+            )
+            self.cur = self.conn.cursor()
+        except Exception as e:
+            messagebox.showerror("Database Error", f"Connection failed: {e}")
+            self.root.destroy()
 
     def setup_ui(self):
         # Welcome Label
@@ -21,8 +36,7 @@ class MovieDashboard:
         button_width = 20
         button_height = 2
 
-        # Top Menu Buttons
-        tk.Button(menu_frame, text='Add Movie', width=button_width, height=button_height).pack(side=tk.LEFT, padx=10)
+        tk.Button(menu_frame, text='Add Movie', width=button_width, height=button_height, command=self.add_movie).pack(side=tk.LEFT, padx=10)
         tk.Button(menu_frame, text='Update Movie', width=button_width, height=button_height).pack(side=tk.LEFT, padx=10)
         tk.Button(menu_frame, text='Delete Movie', width=button_width, height=button_height).pack(side=tk.LEFT, padx=10)
         tk.Button(menu_frame, text='Export Movies', width=button_width, height=button_height).pack(side=tk.LEFT, padx=10)
@@ -51,6 +65,36 @@ class MovieDashboard:
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.tree.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.tree.configure(yscrollcommand=scrollbar.set)
+
+    def add_movie(self):
+        add_window = tk.Toplevel(self.root)
+        add_window.title('Add Movie')
+
+        fields = ['Title', 'Genre', 'Director', 'Release Year', 'Duration', 'Rating']
+        entries = {}
+
+        for field in fields:
+            tk.Label(add_window, text=field, font=('Helvetica', 12)).pack(pady=2)
+            entries[field] = tk.Entry(add_window, font=('Helvetica', 12))
+            entries[field].pack(pady=2)
+
+        def save():
+            values = [entries[field].get() for field in fields]
+            if any(v.strip() == '' for v in values):
+                messagebox.showwarning("Input Error", "All fields are required")
+                return
+            try:
+                self.cur.execute(
+                    "INSERT INTO movies (title, genre, director, release_year, duration, rating) VALUES (%s, %s, %s, %s, %s, %s)",
+                    values
+                )
+                self.conn.commit()
+                messagebox.showinfo('Success', 'Movie added successfully!')
+                add_window.destroy()
+            except Exception as e:
+                messagebox.showerror('Error', f'Failed to add movie: {e}')
+
+        tk.Button(add_window, text='Save', font=('Helvetica', 12), command=save).pack(pady=10)
 
 if __name__ == "__main__":
     root = tk.Tk()
