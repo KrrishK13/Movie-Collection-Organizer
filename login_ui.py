@@ -13,7 +13,7 @@ class LoginPage:
 
     def setup_login_ui(self):
         # Path to background image
-        bg_image_path = 'images/login_3.jpg'  # Make sure this image is in the 'images' folder
+        bg_image_path = 'images/login_3.jpg'  
 
         if not os.path.isfile(bg_image_path):
             messagebox.showerror('Error', 'Background image file not found!')
