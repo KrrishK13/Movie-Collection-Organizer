@@ -11,6 +11,7 @@ class MovieDashboard:
         self.username = username
         self.connect_db()
         self.setup_ui()
+        self.show_movies()
 
     def connect_db(self):
         try:
@@ -26,10 +27,8 @@ class MovieDashboard:
             self.root.destroy()
 
     def setup_ui(self):
-        # Welcome Label
         tk.Label(self.root, text=f'Welcome, {self.username}!', font=('Arial', 20, 'bold'), fg='white', bg='#E22529').pack(pady=4)
 
-        # Menu Frame
         menu_frame = tk.Frame(self.root, bg='lightblue')
         menu_frame.pack(fill=tk.X, padx=10, pady=20)
 
@@ -37,12 +36,11 @@ class MovieDashboard:
         button_height = 2
 
         tk.Button(menu_frame, text='Add Movie', width=button_width, height=button_height, command=self.add_movie).pack(side=tk.LEFT, padx=10)
-        tk.Button(menu_frame, text='Update Movie', width=button_width, height=button_height).pack(side=tk.LEFT, padx=10)
-        tk.Button(menu_frame, text='Delete Movie', width=button_width, height=button_height).pack(side=tk.LEFT, padx=10)
+        tk.Button(menu_frame, text='Update Movie', width=button_width, height=button_height, command=self.update_movie).pack(side=tk.LEFT, padx=10)
+        tk.Button(menu_frame, text='Delete Movie', width=button_width, height=button_height, command=self.delete_movie).pack(side=tk.LEFT, padx=10)
         tk.Button(menu_frame, text='Export Movies', width=button_width, height=button_height).pack(side=tk.LEFT, padx=10)
         tk.Button(menu_frame, text='Logout', width=button_width, height=button_height).pack(side=tk.RIGHT, padx=10)
 
-        # Search Frame
         search_frame = tk.Frame(self.root, bg='lightblue')
         search_frame.pack(fill=tk.X, padx=10)
 
@@ -50,9 +48,8 @@ class MovieDashboard:
         self.search_var = tk.StringVar()
         tk.Entry(search_frame, textvariable=self.search_var, width=30).pack(side=tk.LEFT, padx=10)
         tk.Button(search_frame, text='Search', width=15).pack(side=tk.LEFT, padx=5)
-        tk.Button(search_frame, text='Show All Movies', width=15).pack(side=tk.LEFT, padx=5)
+        tk.Button(search_frame, text='Show All Movies', width=15, command=self.show_movies).pack(side=tk.LEFT, padx=5)
 
-        # Treeview Frame
         list_frame = tk.Frame(self.root)
         list_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
@@ -65,6 +62,13 @@ class MovieDashboard:
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.tree.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.tree.configure(yscrollcommand=scrollbar.set)
+
+    def show_movies(self):
+        self.cur.execute("SELECT * FROM movies")
+        rows = self.cur.fetchall()
+        self.tree.delete(*self.tree.get_children())
+        for row in rows:
+            self.tree.insert('', tk.END, values=row)
 
     def add_movie(self):
         add_window = tk.Toplevel(self.root)
@@ -91,10 +95,74 @@ class MovieDashboard:
                 self.conn.commit()
                 messagebox.showinfo('Success', 'Movie added successfully!')
                 add_window.destroy()
+                self.show_movies()
             except Exception as e:
                 messagebox.showerror('Error', f'Failed to add movie: {e}')
 
         tk.Button(add_window, text='Save', font=('Helvetica', 12), command=save).pack(pady=10)
+
+    def update_movie(self):
+        selected = self.tree.focus()
+        if not selected:
+            messagebox.showwarning("Select Movie", "Please select a movie to update.")
+            return
+
+        values = self.tree.item(selected, 'values')
+        if not values:
+            return
+
+        update_window = tk.Toplevel(self.root)
+        update_window.title('Update Movie')
+
+        fields = ['Title', 'Genre', 'Director', 'Release Year', 'Duration', 'Rating']
+        entries = {}
+
+        for i, field in enumerate(fields):
+            tk.Label(update_window, text=field, font=('Helvetica', 12)).pack(pady=2)
+            entries[field] = tk.Entry(update_window, font=('Helvetica', 12))
+            entries[field].pack(pady=2)
+            entries[field].insert(0, values[i + 1])
+
+        def save():
+            new_values = [entries[field].get() for field in fields]
+            if any(v.strip() == '' for v in new_values):
+                messagebox.showwarning("Input Error", "All fields are required")
+                return
+            try:
+                self.cur.execute(
+                    "UPDATE movies SET title=%s, genre=%s, director=%s, release_year=%s, duration=%s, rating=%s WHERE movie_id=%s",
+                    (*new_values, values[0])
+                )
+                self.conn.commit()
+                messagebox.showinfo("Success", "Movie updated successfully!")
+                update_window.destroy()
+                self.show_movies()
+            except Exception as e:
+                messagebox.showerror("Error", f"Update failed: {e}")
+
+        tk.Button(update_window, text="Save", font=('Helvetica', 12), command=save).pack(pady=10)
+
+    def delete_movie(self):
+        selected = self.tree.focus()
+        if not selected:
+            messagebox.showwarning("Select Movie", "Please select a movie to delete.")
+            return
+
+        values = self.tree.item(selected, 'values')
+        if not values:
+            return
+
+        confirm = messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete movie ID {values[0]}?")
+        if not confirm:
+            return
+
+        try:
+            self.cur.execute("DELETE FROM movies WHERE movie_id=%s", (values[0],))
+            self.conn.commit()
+            messagebox.showinfo("Deleted", "Movie deleted successfully!")
+            self.show_movies()
+        except Exception as e:
+            messagebox.showerror("Error", f"Delete failed: {e}")
 
 if __name__ == "__main__":
     root = tk.Tk()
