@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 import mysql.connector
+import csv
 
 class MovieDashboard:
     def __init__(self, root, username="mahesh"):
@@ -18,7 +19,7 @@ class MovieDashboard:
             self.conn = mysql.connector.connect(
                 host="localhost",
                 user="root",
-                password="krrish13@KAU",
+                password="krrish13@KAU",  # Replace with your MySQL password
                 database="movie_collection_organiser"
             )
             self.cur = self.conn.cursor()
@@ -38,7 +39,7 @@ class MovieDashboard:
         tk.Button(menu_frame, text='Add Movie', width=button_width, height=button_height, command=self.add_movie).pack(side=tk.LEFT, padx=10)
         tk.Button(menu_frame, text='Update Movie', width=button_width, height=button_height, command=self.update_movie).pack(side=tk.LEFT, padx=10)
         tk.Button(menu_frame, text='Delete Movie', width=button_width, height=button_height, command=self.delete_movie).pack(side=tk.LEFT, padx=10)
-        tk.Button(menu_frame, text='Export Movies', width=button_width, height=button_height).pack(side=tk.LEFT, padx=10)
+        tk.Button(menu_frame, text='Export Movies', width=button_width, height=button_height, command=self.export_movies).pack(side=tk.LEFT, padx=10)
         tk.Button(menu_frame, text='Logout', width=button_width, height=button_height).pack(side=tk.RIGHT, padx=10)
 
         search_frame = tk.Frame(self.root, bg='lightblue')
@@ -47,7 +48,7 @@ class MovieDashboard:
         tk.Label(search_frame, text='Search:', bg='lightblue').pack(side=tk.LEFT, padx=10)
         self.search_var = tk.StringVar()
         tk.Entry(search_frame, textvariable=self.search_var, width=30).pack(side=tk.LEFT, padx=10)
-        tk.Button(search_frame, text='Search', width=15).pack(side=tk.LEFT, padx=5)
+        tk.Button(search_frame, text='Search', width=15, command=self.search_movies).pack(side=tk.LEFT, padx=5)
         tk.Button(search_frame, text='Show All Movies', width=15, command=self.show_movies).pack(side=tk.LEFT, padx=5)
 
         list_frame = tk.Frame(self.root)
@@ -163,6 +164,52 @@ class MovieDashboard:
             self.show_movies()
         except Exception as e:
             messagebox.showerror("Error", f"Delete failed: {e}")
+
+    def search_movies(self):
+        keyword = self.search_var.get()
+        if not keyword.strip():
+            messagebox.showwarning("Empty Search", "Please enter a search term.")
+            return
+
+        query = """
+            SELECT * FROM movies
+            WHERE title LIKE %s OR
+                  genre LIKE %s OR
+                  director LIKE %s OR
+                  release_year LIKE %s OR
+                  duration LIKE %s OR
+                  rating LIKE %s
+        """
+        like_keyword = f"%{keyword}%"
+        self.cur.execute(query, (like_keyword,) * 6)
+        rows = self.cur.fetchall()
+
+        self.tree.delete(*self.tree.get_children())
+        for row in rows:
+            self.tree.insert('', tk.END, values=row)
+
+    def export_movies(self):
+        rows = self.tree.get_children()
+        if not rows:
+            messagebox.showinfo("No Data", "No movies to export.")
+            return
+
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv",
+                                                  filetypes=[("CSV files", "*.csv")],
+                                                  title="Save as")
+        if not file_path:
+            return
+
+        try:
+            with open(file_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(["ID", "Title", "Genre", "Director", "Year", "Duration", "Rating"])
+                for row_id in rows:
+                    row_data = self.tree.item(row_id, 'values')
+                    writer.writerow(row_data)
+            messagebox.showinfo("Success", f"Movies exported to {file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to export: {e}")
 
 if __name__ == "__main__":
     root = tk.Tk()
