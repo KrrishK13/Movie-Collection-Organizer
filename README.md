@@ -12,6 +12,7 @@ A Python-based desktop application to manage your personal movie collection usin
 - 📂 **Export** movie list to `.csv`
 - 📊 **Display** data in a TreeView table with scrollbar
 - 🎨 Visually styled UI with **Tkinter** and background images
+- - 🔓 Logout functionality that closes the dashboard
 
 ---
 
@@ -23,7 +24,7 @@ A Python-based desktop application to manage your personal movie collection usin
 - ✅ Day 4: Added Add Movie form and integrated database insert functionality
 - ✅ Day 5: Added Update and Delete movie functionality
 - ✅ Day 6: Added search and export to CSV functionality
-
+- ✅ Day 7: Added Logout button with functionality
 
 ---
 
