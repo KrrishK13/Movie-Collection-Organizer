@@ -40,7 +40,7 @@ class MovieDashboard:
         tk.Button(menu_frame, text='Update Movie', width=button_width, height=button_height, command=self.update_movie).pack(side=tk.LEFT, padx=10)
         tk.Button(menu_frame, text='Delete Movie', width=button_width, height=button_height, command=self.delete_movie).pack(side=tk.LEFT, padx=10)
         tk.Button(menu_frame, text='Export Movies', width=button_width, height=button_height, command=self.export_movies).pack(side=tk.LEFT, padx=10)
-        tk.Button(menu_frame, text='Logout', width=button_width, height=button_height).pack(side=tk.RIGHT, padx=10)
+        tk.Button(menu_frame, text='Logout', width=button_width, height=button_height, command=self.logout).pack(side=tk.RIGHT, padx=10)
 
         search_frame = tk.Frame(self.root, bg='lightblue')
         search_frame.pack(fill=tk.X, padx=10)
@@ -210,6 +210,11 @@ class MovieDashboard:
             messagebox.showinfo("Success", f"Movies exported to {file_path}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to export: {e}")
+
+    def logout(self):
+        messagebox.showinfo("Logout", "You have been logged out!")
+        self.root.destroy()
+
 
 if __name__ == "__main__":
     root = tk.Tk()
