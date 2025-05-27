@@ -1,8 +1,60 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import mysql.connector
+import os
 import csv
+from PIL import Image, ImageTk
 
+# ---------------------------- Login Page ----------------------------
+class LoginPage:
+    def __init__(self, root):
+        self.root = root
+        self.root.geometry('1350x700')
+        self.root.title("Login - Movie Collection Organizer")
+        self.root.resizable(False, False)
+        self.setup_login_ui()
+
+    def setup_login_ui(self):
+        bg_image_path = os.path.join("images", "login_3.jpg")
+        if not os.path.isfile(bg_image_path):
+            messagebox.showerror('Error', 'Login background image not found!')
+            self.root.destroy()
+            return
+
+        bg_image = Image.open(bg_image_path)
+        bg_image = bg_image.resize((1350, 700), Image.LANCZOS)
+        self.bgimg = ImageTk.PhotoImage(bg_image)
+        bg = tk.Label(self.root, image=self.bgimg)
+        bg.place(x=0, y=0, relwidth=1, relheight=1)
+
+        frame = tk.Frame(self.root, bg='white', padx=20, pady=20, bd=7, relief=tk.RIDGE)
+        frame.place(relx=0.5, rely=0.4, anchor=tk.CENTER)
+
+        tk.Label(frame, text='Movie Collection Organizer', font=('Helvetica', 20, 'bold'), bg='white', fg='#333').grid(row=0, column=0, columnspan=2, pady=10)
+        tk.Label(frame, text='Username:', font=('Helvetica', 14), bg='white').grid(row=1, column=0, pady=5)
+        tk.Label(frame, text='Password:', font=('Helvetica', 14), bg='white').grid(row=2, column=0, pady=5)
+
+        self.unameE = tk.Entry(frame, font=('Helvetica', 14))
+        self.unameE.grid(row=1, column=1, pady=5)
+        self.upassE = tk.Entry(frame, font=('Helvetica', 14), show='*')
+        self.upassE.grid(row=2, column=1, pady=5)
+
+        login_btn = tk.Button(frame, text='Login', font=('Helvetica', 14, 'bold'), command=self.login_action)
+        login_btn.grid(row=3, column=0, columnspan=2, pady=10)
+
+    def login_action(self):
+        username = self.unameE.get()
+        password = self.upassE.get()
+        if username == 'mahesh' and password == 'mahesh123':
+            self.root.destroy()
+            root = tk.Tk()
+            MovieDashboard(root, username)
+            root.mainloop()
+        else:
+            messagebox.showerror('Error', 'Invalid credentials')
+
+
+# ---------------------------- Dashboard ----------------------------
 class MovieDashboard:
     def __init__(self, root, username="mahesh"):
         self.root = root
@@ -19,7 +71,7 @@ class MovieDashboard:
             self.conn = mysql.connector.connect(
                 host="localhost",
                 user="root",
-                password="krrish13@KAU",  # Replace with your MySQL password
+                password="krrish13@KAU",  # Change this for your DB
                 database="movie_collection_organiser"
             )
             self.cur = self.conn.cursor()
@@ -28,8 +80,20 @@ class MovieDashboard:
             self.root.destroy()
 
     def setup_ui(self):
+        # Background Image for Dashboard
+        bg_path = os.path.join("images", "dashboard_bg.jpg")
+        if os.path.exists(bg_path):
+            bg_image = Image.open(bg_path)
+            bg_image = bg_image.resize((1280, 720), Image.LANCZOS)
+            self.bg_img = ImageTk.PhotoImage(bg_image)
+            self.bg_label = tk.Label(self.root, image=self.bg_img)
+            self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+            self.bg_label.lower()
+
+        # Welcome Label
         tk.Label(self.root, text=f'Welcome, {self.username}!', font=('Arial', 20, 'bold'), fg='white', bg='#E22529').pack(pady=4)
 
+        # Menu Frame
         menu_frame = tk.Frame(self.root, bg='lightblue')
         menu_frame.pack(fill=tk.X, padx=10, pady=20)
 
@@ -42,6 +106,7 @@ class MovieDashboard:
         tk.Button(menu_frame, text='Export Movies', width=button_width, height=button_height, command=self.export_movies).pack(side=tk.LEFT, padx=10)
         tk.Button(menu_frame, text='Logout', width=button_width, height=button_height, command=self.logout).pack(side=tk.RIGHT, padx=10)
 
+        # Search Frame
         search_frame = tk.Frame(self.root, bg='lightblue')
         search_frame.pack(fill=tk.X, padx=10)
 
@@ -51,6 +116,7 @@ class MovieDashboard:
         tk.Button(search_frame, text='Search', width=15, command=self.search_movies).pack(side=tk.LEFT, padx=5)
         tk.Button(search_frame, text='Show All Movies', width=15, command=self.show_movies).pack(side=tk.LEFT, padx=5)
 
+        # Treeview Frame
         list_frame = tk.Frame(self.root)
         list_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
@@ -173,15 +239,11 @@ class MovieDashboard:
 
         query = """
             SELECT * FROM movies
-            WHERE title LIKE %s OR
-                  genre LIKE %s OR
-                  director LIKE %s OR
-                  release_year LIKE %s OR
-                  duration LIKE %s OR
-                  rating LIKE %s
+            WHERE title LIKE %s OR genre LIKE %s OR director LIKE %s
+            OR release_year LIKE %s OR duration LIKE %s OR rating LIKE %s
         """
-        like_keyword = f"%{keyword}%"
-        self.cur.execute(query, (like_keyword,) * 6)
+        like = f"%{keyword}%"
+        self.cur.execute(query, (like,) * 6)
         rows = self.cur.fetchall()
 
         self.tree.delete(*self.tree.get_children())
@@ -195,8 +257,8 @@ class MovieDashboard:
             return
 
         file_path = filedialog.asksaveasfilename(defaultextension=".csv",
-                                                  filetypes=[("CSV files", "*.csv")],
-                                                  title="Save as")
+                                                 filetypes=[("CSV files", "*.csv")],
+                                                 title="Save as")
         if not file_path:
             return
 
@@ -212,11 +274,14 @@ class MovieDashboard:
             messagebox.showerror("Error", f"Failed to export: {e}")
 
     def logout(self):
-        messagebox.showinfo("Logout", "You have been logged out!")
         self.root.destroy()
+        root = tk.Tk()
+        LoginPage(root)
+        root.mainloop()
 
 
+# ---------------------------- Entry Point ----------------------------
 if __name__ == "__main__":
     root = tk.Tk()
-    app = MovieDashboard(root)
+    LoginPage(root)
     root.mainloop()
