@@ -26,6 +26,7 @@ A Python-based desktop application to manage your personal movie collection usin
 - ✅ Day 6: Added search and export to CSV functionality
 - ✅ Day 7: Added Logout button with functionality
 - ✅ Day 8: Final UI polish, added dashboard background image, and login relaunch on logout
+- ✅ Day 9: Final README, screenshots, and full project push
 
 ---
 
@@ -47,6 +48,23 @@ A Python-based desktop application to manage your personal movie collection usin
 | Username | Password   |
 |----------|------------|
 | mahesh   | mahesh123  |
+
+---
+
+---
+
+## 📸 Screnshots
+- 🔐 Login Screen
+This is the first screen users see. It includes a background image and login validation for secure access.
+
+- 🎬 Dashboard
+After a successful login, users are greeted with a clean and organized dashboard. It includes options to Add, Update, Delete, Export, and Search movies.
+
+- ➕ Add Movie
+Clicking on "Add Movie" opens a pop-up where users can enter movie details and save them to the database.
+
+- ✏️ Update Movie
+This pop-up allows users to modify any movie record by selecting a row from the table and updating its fields like title, genre, director, and rating.
 
 ---
 
